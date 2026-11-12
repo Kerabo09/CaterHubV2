@@ -1,0 +1,256 @@
+import { useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { carry } from './CatererList';
+import { copyLink, mapUrl } from './mapLinks';
+import { BLOCKED, useAvail } from '../shared/AvailCalendar';
+import { Arrow, Bookmark } from '../shared/Icons';
+import { Empty, gate, longDate, msg, ok, peso, today, useLoad } from '../shared/lib';
+import { COMPARE_MAX, useList } from '../shared/saved';
+import { sb } from '../shared/supabase';
+export function Profile() {
+  const { id } = useParams();
+  const [sp] = useSearchParams();
+  const q = Object.fromEntries(sp);
+  const [cmp, toggleCmp] = useList('compare');
+  const [date, setDate] = useState(q.date || '');
+  const [tab, setTab] = useState('overview');
+  const s = useLoad(
+    async () =>
+      ok(
+        await sb
+          .from('caterer_profiles')
+          .select('*,service_areas(area_name),catering_packages(*,package_photos(image_url))')
+          .eq('caterer_id', id)
+          .maybeSingle(),
+      ),
+    [id],
+  );
+  const av = useAvail(id);
+  const g = gate(s);
+  if (g) return g;
+  const c = s.data;
+  if (!c || c.status !== 'Published')
+    return (
+      <Empty>
+        <h3 className="h3">Caterer not found</h3>
+        <p className="mut">This profile is not available. It may be a draft or no longer active.</p>
+        <Link className="btn" to="/caterers">
+          Browse caterers
+        </Link>
+      </Empty>
+    );
+  const ps = c.catering_packages.filter((p) => p.is_active),
+    photos = ps.flatMap((p) => p.package_photos.map((x) => x.image_url)),
+    tiles = [c.logo && { src: c.logo, logo: true }, ...photos.map((src) => ({ src }))].filter(Boolean).slice(0, 2),
+    inCmp = cmp.includes(c.caterer_id),
+    st = date ? av.data?.map?.[date] : null,
+    map = mapUrl(c),
+    area = c.service_areas.map((a) => a.area_name).join(', ') || 'Calbayog City',
+    custom = ps.some((p) => p.is_customizable),
+    inquire = `/inquire/${c.caterer_id}${carry({ ...q, date })}`;
+  const goto = (t) => {
+    setTab(t);
+    document.getElementById(t)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  return (
+    <div className="wrap page">
+      <div className="crumbs">
+        <Link to="/caterers">Browse caterers</Link>
+        <i>/</i>
+        {c.business_name}
+      </div>
+      <div className={'gal' + (tiles.length < 2 ? ' one' : '')}>
+        {tiles.length === 0 && <div className="mut">No photos yet</div>}
+        {tiles.map((t, i) => (
+          <div key={i} className={t.logo ? 'logo-t' : ''}>
+            <img src={t.src} alt="" />
+          </div>
+        ))}
+      </div>
+      <div className="pf-head">
+        <div>
+          <h1>{c.business_name}</h1>
+          <p className="sub" style={{ marginTop: 10 }}>
+            {c.tagline || 'Local catering for your celebrations.'}
+          </p>
+          <div className="tags-row">
+            <span className="pill sage">{area}</span>
+            {custom && <span className="pill rust">Customizable menus</span>}
+          </div>
+        </div>
+        <div className="pf-cta">
+          <Link className="btn" to={inquire}>
+            Send an inquiry <Arrow />
+          </Link>
+          <button
+            type="button"
+            className="btn out"
+            onClick={() => !toggleCmp(c.caterer_id) && msg(`You can compare up to ${COMPARE_MAX} caterers.`, 1)}
+          >
+            <Bookmark on={inCmp} /> {inCmp ? 'Selected to compare' : 'Save to compare'}
+          </button>
+        </div>
+      </div>
+      <div className="tabs">
+        {[
+          ['overview', 'Overview'],
+          ['packages', 'Packages'],
+          ['gallery', 'Gallery'],
+          ['availability', 'Availability'],
+        ].map(([k, l]) => (
+          <button key={k} className={tab === k ? 'on' : ''} onClick={() => goto(k)}>
+            {l}
+          </button>
+        ))}
+      </div>
+      <div className="pf-grid" id="overview" style={{ scrollMarginTop: 90 }}>
+        <div>
+          <h2 className="h2" style={{ fontSize: 26 }}>
+            Good food brings people together.
+          </h2>
+          <p className="mut" style={{ marginTop: 14, maxWidth: 560, whiteSpace: 'pre-line' }}>
+            {c.description}
+          </p>
+          <h2 className="sec-t" id="packages" style={{ scrollMarginTop: 90 }}>
+            For your next gathering
+          </h2>
+          {ps.length === 0 ? (
+            <p className="mut">This caterer has not published any packages yet.</p>
+          ) : (
+            <div className="pk-cards">
+              {ps.map((p) => (
+                <div className="pk-card" key={p.package_id}>
+                  <h4>{p.name}</h4>
+                  <p>{p.description}</p>
+                  <div className="pr">{peso(p.price)} / guest</div>
+                  <div className="small">
+                    <span className="mut">
+                      {p.min_guests}–{p.max_guests} guests ·{' '}
+                    </span>
+                    <Link className="lnk" to={'/package/' + p.package_id + carry(q)}>
+                      View package →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <aside className="card side-card">
+          <h4>Get to know your caterer</h4>
+          <div className="kv-l" style={{ marginTop: 0 }}>
+            Contact
+          </div>
+          <div>{c.contact_number}</div>
+          {c.email && <div>{c.email}</div>}
+          {c.address && (
+            <>
+              <div className="kv-l">Address</div>
+              <div>{c.address}</div>
+              {map && (
+                <div className="small" style={{ marginTop: 4 }}>
+                  <a href={map} target="_blank" rel="noopener noreferrer">
+                    Open location in maps
+                  </a>{' '}
+                  ·{' '}
+                  <button type="button" className="lnk small" onClick={() => copyLink(map)}>
+                    Copy link
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+          <div className="kv-l">Service area</div>
+          <div>{area}</div>
+          <div className="kv-l">Event types</div>
+          <div>{c.event_types.join(' · ')}</div>
+          <div className="kv-l">Travel note</div>
+          <div>
+            {c.note || (c.out_of_town ? 'Out-of-town events accepted. Ask about fees.' : 'Calbayog City events only.')}
+          </div>
+          <div className="kv-l">Capacity</div>
+          <div>
+            {c.min_guests}–{c.max_guests} guests
+          </div>
+        </aside>
+      </div>
+      <div className="box sage" id="availability" style={{ marginTop: 44, padding: 28, scrollMarginTop: 90 }}>
+        <h2 className="h3" style={{ fontSize: 24 }}>
+          Have a date in mind?
+        </h2>
+        <p className="mut small" style={{ margin: '6px 0 0' }}>
+          Choose a date to check the caterer's current availability.
+        </p>
+        <div className="datebox">
+          <div>
+            <label className="l" style={{ fontSize: 12, fontWeight: 500 }}>
+              Event date
+            </label>
+            <input type="date" min={today()} value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div>
+            {date &&
+              (st && BLOCKED.includes(st) ? (
+                <span className="pill rust">{st}</span>
+              ) : (
+                <span className="pill sage">Available for inquiry</span>
+              ))}
+          </div>
+          <p className="tiny mut" style={{ margin: 0 }}>
+            Availability is not a reservation. Confirm all details directly.
+          </p>
+        </div>
+        {date && (
+          <p className="small" style={{ marginTop: 14, marginBottom: 0 }}>
+            {longDate(date)} ·{' '}
+            {st && BLOCKED.includes(st) ? (
+              <>Already {st}. Discuss an alternative date directly with the caterer.</>
+            ) : (
+              <Link className="lnk" to={inquire}>
+                Ask about this date →
+              </Link>
+            )}
+          </p>
+        )}
+        <div style={{ marginTop: 24 }}>
+          <Link className="lnk small" to={`/caterer/${c.caterer_id}/gallery`}>
+            View gallery and full calendar →
+          </Link>
+        </div>
+      </div>
+      <h2 className="sec-t" id="gallery" style={{ scrollMarginTop: 90 }}>
+        Reviews &amp; business details
+      </h2>
+      <p className="mut small">Reviews, event photos, and verification details help you compare caterers with confidence.</p>
+      <div className="rv3">
+        <div className="card">
+          <h4>Genuine customer reviews</h4>
+          <span className="pill rust" style={{ marginBottom: 12 }}>
+            No reviews yet
+          </span>
+          <p>No customer reviews are available yet.</p>
+          <p>Ask for references or recent event examples before choosing your caterer.</p>
+        </div>
+        <div className="card">
+          <h4>Event photos</h4>
+          <span className="pill sage" style={{ marginBottom: 12 }}>
+            Gallery
+          </span>
+          <p>Explore event setups and menu presentation in the gallery.</p>
+          <p>Gallery photos are not verified customer reviews.</p>
+          <Link className="lnk small" to={`/caterer/${c.caterer_id}/gallery`}>
+            Open gallery →
+          </Link>
+        </div>
+        <div className="card">
+          <h4>Business verification</h4>
+          <span className="pill rust" style={{ marginBottom: 12 }}>
+            Not provided
+          </span>
+          <p>Business registration and permit verification details are not available on this profile.</p>
+          <p>Ask the caterer for current documentation before finalizing arrangements.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
