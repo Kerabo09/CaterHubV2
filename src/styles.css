@@ -45,6 +45,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .h2 { font-size: 28px; }
 .h3 { font-size: 20px; }
 .sub { color: var(--mut); font-size: 16px; margin-top: 8px; }
+.owner-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--rust-t); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; }
 .crumbs { font-size: 13px; color: var(--mut); margin-bottom: 18px; }
 .crumbs a { color: var(--mut); }
 .crumbs a:hover { color: var(--rust); }
@@ -200,6 +201,10 @@ button.tag { cursor: pointer; }
 /* ---------- directory ---------- */
 .dir-search { display: grid; grid-template-columns: 1fr 170px; gap: 18px; align-items: end; }
 .dir-grid { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; margin-top: 26px; }
+.dir-grid.solo { grid-template-columns: 1fr; }
+.dir-grid.solo .cat { grid-template-columns: 300px 1fr; padding: 16px; }
+.dir-grid.solo .cat .ph { aspect-ratio: 1 / 0.7; }
+.dir-grid.solo .cat h3 { font-size: 26px; }
 .filters { background: #fff; border-radius: 16px; padding: 22px; }
 .filters h3 { font-size: 18px; font-weight: 600; }
 .filters .field { margin-bottom: 14px; }
@@ -216,7 +221,7 @@ button.tag { cursor: pointer; }
 .cat { display: grid; grid-template-columns: 220px 1fr; gap: 28px; background: #fff; border-radius: 16px; padding: 12px; margin-bottom: 18px; box-shadow: var(--shadow); align-items: center; }
 .cat .ph { position: relative; border-radius: 12px; overflow: hidden; aspect-ratio: 1 / 0.78; background: var(--sage); display: block; }
 .cat .ph img { width: 100%; height: 100%; object-fit: cover; }
-.cat .ph.logo img { object-fit: contain; background: #fff; }
+.cat .ph.logo img { object-fit: cover; }
 .cat-actions { position: absolute; left: 8px; top: 8px; right: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .tog { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: rgba(255, 255, 255, 0.94); border: 1px solid var(--rust); color: var(--rust); border-radius: 8px; padding: 7px 4px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .tog.on { background: var(--rust-t); }
@@ -469,7 +474,7 @@ button.tag { cursor: pointer; }
   .h1, .pf-head h1 { font-size: 32px; }
   .hero { padding-top: 26px; } .hero h1 { font-size: 38px; }
   .search { grid-template-columns: 1fr; }
-  .cat { grid-template-columns: 1fr; padding: 12px; }
+  .cat, .dir-grid.solo .cat { grid-template-columns: 1fr; padding: 12px; }
   .cat .bot { padding-right: 0; }
   .pk-cards, .pcards, .fgrid, .kvs, .stats3 { grid-template-columns: 1fr; }
   .stats3 { grid-template-columns: repeat(3, 1fr); gap: 10px; }
