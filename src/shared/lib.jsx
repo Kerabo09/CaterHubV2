@@ -16,10 +16,10 @@ export const fromPrice = (c) => {
   return p.length ? Math.min(...p) : null;
 };
 export const COVERS = ['/images/cover-1.jpg', '/images/cover-2.jpg', '/images/cover-3.jpg'];
-// the first photo of a caterer: a package photo, else the logo, else a sample cover
+// the cover of a caterer: the business logo, else a package photo, else a sample cover
 export const coverOf = (c, i = 0) => {
   const ph = (c.catering_packages || []).flatMap((p) => p.package_photos || [])[0];
-  return { src: ph?.image_url || c.logo || COVERS[i % COVERS.length], isLogo: !ph && !!c.logo };
+  return { src: c.logo || ph?.image_url || COVERS[i % COVERS.length], isLogo: !!c.logo };
 };
 export const fmt = (d) =>
   new Date(d).toLocaleString('en-PH', {
