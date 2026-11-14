@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useOwner } from './OwnerLayout';
 import { useAuth } from '../shared/AuthContext';
 import { Link } from 'react-router-dom';
-import { EVENTS, run, msg, upload } from '../shared/lib';
+import { run, msg, upload } from '../shared/lib';
 import { sb } from '../shared/supabase';
 const split = (t) => [...new Set(t.split(',').map((a) => a.trim()).filter(Boolean))];
 export function ProfileTab() {
@@ -24,14 +24,14 @@ export function ProfileTab() {
     out_of_town: !!x.out_of_town,
   });
   const [sel, setSel] = useState(() => new Set(x.event_types || []));
-  const [extra, setExtra] = useState(() => (x.event_types || []).filter((e) => !EVENTS.includes(e)));
+  const [extra, setExtra] = useState(() => x.event_types || []);
   const [newEv, setNewEv] = useState('');
   const [adding, setAdding] = useState(false);
   const [file, setFile] = useState(null);
   const [err, setErr] = useState('');
   const set = (k) => (e) => setV({ ...v, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
   const status = x.status || 'Draft',
-    list = [...EVENTS, ...extra],
+    list = extra,
     checks = [
       ['Business name and description', v.business_name.trim() && v.description.trim()],
       ['Contact number', v.contact_number.trim()],
@@ -122,7 +122,7 @@ export function ProfileTab() {
           </p>
         </div>
         {x.caterer_id && status === 'Published' && (
-          <Link className="lnk" to={'/caterer/' + x.caterer_id} target="_blank">
+          <Link className="lnk" to={'/caterer/' + x.caterer_id}>
             Preview profile ↗
           </Link>
         )}
@@ -187,6 +187,7 @@ export function ProfileTab() {
               <textarea rows="2" value={v.note} onChange={set('note')} placeholder="Free delivery within the city. Ask about delivery fees for out-of-town events." />
             </div>
             <label className="l">Event types *</label>
+            {list.length === 0 && <p className="tiny mut">No event types yet. Add the events your business caters.</p>}
             <div className="evgrid">
               {list.map((e) => (
                 <label className="check" key={e}>
