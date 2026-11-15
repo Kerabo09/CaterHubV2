@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../shared/AuthContext';
+import { unreadRefs } from '../shared/Conversation';
 import { Arrow } from '../shared/Icons';
 import { Badge, gate, ok, shortDay, today, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
 const PAGE = 5;
 const MORE = ['Unavailable', 'Confirmed Outside System', 'Cancelled'];
 export function My() {
+  const { me } = useAuth();
   const [tab, setTab] = useState('All');
   const [pg, setPg] = useState(1);
   const [cal, setCal] = useState(false);
@@ -20,6 +23,7 @@ export function My() {
       ok(await sb.from('inquiries').select('*,caterer_profiles(business_name)').order('created_at', { ascending: false })),
     [],
   );
+  const un = useLoad(() => unreadRefs(me.id), []);
   const g = gate(s);
   if (g) return g;
   const all = s.data,
@@ -182,6 +186,11 @@ export function My() {
                 </div>
                 <div>
                   <Badge s={i.status} />
+                  {un.data?.has(i.ref) && (
+                    <div style={{ marginTop: 6 }}>
+                      <span className="pill rust">New reply</span>
+                    </div>
+                  )}
                 </div>
                 <Link className="lnk small" to={'/my/' + i.ref}>
                   View →

@@ -126,6 +126,11 @@ export function NotesBody({ owner = false }) {
                   Reply to customer
                 </Link>
               )}
+              {!owner && ref && (
+                <Link className="btn out sm nreply" to={'/my/' + ref} onClick={(e) => e.stopPropagation()}>
+                  Open conversation
+                </Link>
+              )}
               {canReply &&
                 (replyTo === n.notification_id ? (
                   <div className="nreply" onClick={(e) => e.stopPropagation()}>

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useAuth } from '../shared/AuthContext';
+import { unreadRefs } from '../shared/Conversation';
 import { Link } from 'react-router-dom';
 import { STATUSES } from './constants';
 import { useOwner } from './OwnerLayout';
@@ -6,7 +8,8 @@ import { Badge, gate, ok, shortDay, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
 const PAGE = 5;
 export function OwnerInquiries() {
-  const { c } = useOwner();
+  const { c } = useOwner(),
+    { me } = useAuth();
   const [q, setQ] = useState('');
   const [date, setDate] = useState('');
   const [status, setStatus] = useState('');
@@ -23,6 +26,7 @@ export function OwnerInquiries() {
       ),
     [c.caterer_id],
   );
+  const un = useLoad(() => unreadRefs(me.id), []);
   const g = gate(s);
   if (g) return g;
   const all = s.data,
@@ -107,6 +111,11 @@ export function OwnerInquiries() {
                 </div>
                 <div>
                   <Badge s={i.status} />
+                  {un.data?.has(i.ref) && (
+                    <div style={{ marginTop: 6 }}>
+                      <span className="pill rust">New message</span>
+                    </div>
+                  )}
                 </div>
                 <Link className="lnk small" to={'/owner/inq/' + i.ref}>
                   Open →
