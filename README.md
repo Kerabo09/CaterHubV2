@@ -12,6 +12,7 @@ A caterer directory for Calbayog City. Customers browse caterers, compare packag
 - Send an inquiry for a package or a custom event
 - Track inquiries, chat with the caterer and get in-app notifications
 
+
 **Caterer owners**
 - Business profile with logo, event types and service areas (Draft, Published or Deactivated)
 - Packages with menu items and photos
