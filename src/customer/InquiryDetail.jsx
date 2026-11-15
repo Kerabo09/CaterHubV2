@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
+import { Conversation, buildThread, markInquiryRead } from '../shared/Conversation';
 import { Up } from '../shared/Icons';
 import { Badge, Empty, gate, longDate, msg, ok, run, useLoad, when } from '../shared/lib';
 import { sb } from '../shared/supabase';
@@ -8,6 +9,9 @@ export function InquiryDetail() {
   const { ref } = useParams(),
     { me } = useAuth();
   const [ask, setAsk] = useState(false);
+  useEffect(() => {
+    markInquiryRead(me.id, ref);
+  }, [me.id, ref]);
   const s = useLoad(async () => {
     const i = ok(
       await sb
@@ -35,7 +39,7 @@ export function InquiryDetail() {
     );
   const { i, h, ms } = s.data,
     c = i.caterer_profiles,
-    reply = [...h].reverse().find((x) => x.message && x.changed_by !== me.id),
+    thread = buildThread({ ms, h, meId: me.id, selfRole: 'Customer', otherName: c.business_name }),
     pending = i.status === 'Pending';
   const cancel = run(async () => {
     const r = await sb.rpc('set_inquiry_status', { p_id: i.inquiry_id, p_status: 'Cancelled', p_message: 'Cancelled by customer' });
@@ -116,15 +120,7 @@ export function InquiryDetail() {
               )}
             </div>
           </div>
-          {reply ? (
-            <div className="reply-box">
-              <h3>A reply from {c.business_name}</h3>
-              <blockquote>“{reply.message}”</blockquote>
-              <span className="tiny mut">
-                {c.business_name} · {when(reply.created_at)}
-              </span>
-            </div>
-          ) : pending ? (
+          {pending && thread.length === 0 && (
             <div className="reply-box">
               <h3>Waiting for a reply</h3>
               <p className="mut">
@@ -136,34 +132,15 @@ export function InquiryDetail() {
               </p>
               <span className="tiny mut">Sent {when(i.created_at)}</span>
             </div>
-          ) : null}
-          {ms.length > 0 && (
-            <div className="card" style={{ marginTop: 22 }}>
-              <h3 className="h3" style={{ marginBottom: 12 }}>
-                Messages
-              </h3>
-              {ms.map((x) => (
-                <div className="hist" key={x.message_id}>
-                  <div className="it">
-                    <b className="small">{x.sender_role === 'Customer' ? 'You' : c.business_name}</b>
-                    <span className="tiny mut"> · {when(x.created_at)}</span>
-                    <p style={{ margin: '6px 0 0' }}>{x.message}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
           )}
-          {i.status !== 'Cancelled' && (
-            <form className="card" style={{ marginTop: 22 }} onSubmit={send}>
-              <h3 className="h3" style={{ marginBottom: 12 }}>
-                Send a message to {c.business_name}
-              </h3>
-              <textarea name="message" rows="3" maxLength={1000} placeholder="Add details, answer a question, or confirm your venue…" />
-              <button className="btn sm" style={{ marginTop: 12 }}>
-                Send message
-              </button>
-            </form>
-          )}
+          <Conversation
+            title={`Conversation with ${c.business_name}`}
+            thread={thread}
+            empty="No messages yet. Say hello or add details for the caterer."
+            onSend={send}
+            canSend={i.status !== 'Cancelled'}
+            placeholder="Add details, answer a question, or confirm your venue…"
+          />
           <p className="notice">
             {pending
               ? 'No booking or contract is created here. You may cancel this inquiry only while its status is Pending.'

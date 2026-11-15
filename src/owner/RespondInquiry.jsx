@@ -1,14 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { OWNER_STATUSES } from './constants';
+import { useAuth } from '../shared/AuthContext';
+import { Conversation, buildThread, markInquiryRead } from '../shared/Conversation';
 import { useOwner } from './OwnerLayout';
 import { Badge, gate, longDate, msg, ok, peso, run, shortDay, useLoad, when } from '../shared/lib';
 import { sb } from '../shared/supabase';
 export function RespondInquiry() {
   const { ref } = useParams(),
-    { c } = useOwner();
+    { c } = useOwner(),
+    { me } = useAuth();
   const [st, setSt] = useState('');
   const [agree, setAgree] = useState(false);
+  useEffect(() => {
+    markInquiryRead(me.id, ref);
+  }, [me.id, ref]);
   const s = useLoad(async () => {
     const i = ok(
       await sb
@@ -39,7 +45,20 @@ export function RespondInquiry() {
   const { i, h, ms, av } = s.data,
     next = st || OWNER_STATUSES.find((x) => x !== i.status) || 'Replied',
     conflict = av === 'Reserved' || av === 'Unavailable',
-    outside = next === 'Confirmed Outside System';
+    outside = next === 'Confirmed Outside System',
+    thread = buildThread({ ms, h, meId: me.id, selfRole: 'Caterer', otherName: i.customers?.name || 'Customer' });
+  const chat = run(async (e) => {
+    const t = e.target.message.value.trim();
+    if (!t) throw new Error('Please type your message.');
+    const r = await sb.rpc('reply_as_caterer', { p_ref: i.ref, p_message: t });
+    if (r.error) {
+      if ((r.error.message || '').includes('reply_as_caterer')) throw new Error('Chat is not set up yet. Run caterhub_owner_chat_patch.sql in Supabase.');
+      throw r.error;
+    }
+    e.target.reset();
+    msg('Message sent to the customer');
+    s.reload();
+  });
   const send = run(async (e) => {
     const t = e.target.message.value.trim();
     if ((next === 'Unavailable' || next === 'Cancelled') && !t) throw new Error('A message is required for Unavailable and Cancelled statuses.');
@@ -114,20 +133,14 @@ export function RespondInquiry() {
               )}
             </div>
           </div>
-          {ms.length > 0 && (
-            <div className="card hist">
-              <h3 className="h3" style={{ marginBottom: 6 }}>
-                Customer messages
-              </h3>
-              {ms.map((x) => (
-                <div className="it" key={x.message_id}>
-                  <b className="small">{x.sender_role === 'Customer' ? i.customers?.name || 'Customer' : 'You'}</b>
-                  <span className="tiny mut"> · {when(x.created_at)}</span>
-                  <p style={{ margin: '6px 0 0' }}>{x.message}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <Conversation
+            title={`Conversation with ${i.customers?.name || 'Customer'}`}
+            thread={thread}
+            empty="No messages yet. Send a message below, or reply with a status update."
+            onSend={chat}
+            placeholder="Write a message to your customer…"
+            top={0}
+          />
           <div className="card hist">
             <h3 className="h3" style={{ marginBottom: 6 }}>
               Status history
