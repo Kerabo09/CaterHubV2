@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Arrow, Bookmark, Swap } from '../shared/Icons';
 import { DIETARY, EVENTS, coverOf, fromPrice, gate, msg, ok, peso, shortDay, useLoad } from '../shared/lib';
@@ -41,6 +42,7 @@ export function matches(c, q, blocked) {
 export function List() {
   const [sp, setSp] = useSearchParams();
   const nav = useNavigate();
+  const [open, setOpen] = useState(false);
   const q = Object.fromEntries(sp);
   const [saved, toggleSaved] = useList('saved');
   const [cmp, toggleCmp] = useList('compare');
@@ -71,6 +73,8 @@ export function List() {
     blocked = new Set(bl.data || []);
   const areas = [...new Set(all.flatMap((c) => c.service_areas.map((a) => a.area_name.trim())))].sort();
   const events = [...new Set([...EVENTS, ...all.flatMap((c) => c.event_types)])];
+  const diet = (q.diet || '').split(',').filter(Boolean);
+  const activeFilters = ['area', 'event', 'budget', 'guests', 'date', 'diet'].filter((k) => q[k]).length;
   const sort = q.sort || 'name';
   const rows = all
     .filter((c) => matches(c, q, blocked))
@@ -86,15 +90,15 @@ export function List() {
   };
   const apply = (e) => {
     e.preventDefault();
-    const f = new FormData(e.target),
-      diet = f.getAll('diet').join(',');
+    const f = new FormData(e.target);
     const n = {};
     ['area', 'event', 'budget', 'guests', 'date'].forEach((k) => (n[k] = String(f.get(k) || '').trim()));
-    n.diet = diet;
+    n.diet = f.getAll('diet').join(',');
     if (q.name) n.name = q.name;
     if (q.sort) n.sort = q.sort;
     Object.keys(n).forEach((k) => !n[k] && delete n[k]);
     setSp(n);
+    setOpen(false);
   };
   const chips = [
     q.name && ['name', `"${q.name}"`],
@@ -105,7 +109,6 @@ export function List() {
     q.date && ['date', shortDay(q.date)],
     q.diet && ['diet', q.diet.split(',').join(', ')],
   ].filter(Boolean);
-  const diet = (q.diet || '').split(',').filter(Boolean);
   const pickCompare = (id) => {
     if (!toggleCmp(id)) msg(`You can compare up to ${COMPARE_MAX} caterers. Remove one first.`, 1);
   };
@@ -127,20 +130,18 @@ export function List() {
           <input id="nm" name="name" type="search" defaultValue={q.name || ''} placeholder="Search caterers…" />
           <button className="btn">Search</button>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
+          <button type="button" className="btn out sm" style={{ minWidth: 170 }} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+            {open ? 'Hide filters' : 'Filters'}
+            {activeFilters > 0 ? ` (${activeFilters})` : ''}
+          </button>
           <Link className="btn out sm" to="/saved" style={{ minWidth: 170 }}>
             Saved caterers ({saved.length})
           </Link>
         </div>
       </form>
-      <div className="dir-grid" style={{ marginTop: 6 }}>
-        <form className="filters" onSubmit={apply} key={sp.toString()}>
-          <div className="row-between" style={{ alignItems: 'center', marginBottom: 18 }}>
-            <h3>Filters</h3>
-            <button type="button" className="lnk small" onClick={() => nav('/caterers')}>
-              Reset
-            </button>
-          </div>
+      {open && (
+        <form className="filters bar" onSubmit={apply} key={sp.toString()} style={{ marginTop: 16 }}>
           <div className="field">
             <label className="l">Location</label>
             <select name="area" defaultValue={q.area || ''}>
@@ -176,9 +177,6 @@ export function List() {
           <div className="field">
             <label className="l">Event date (optional)</label>
             <input type="date" name="date" defaultValue={q.date || ''} />
-            <p className="hint tiny mut" style={{ marginTop: 8 }}>
-              Dates are indicative. Ask the caterer to confirm availability.
-            </p>
           </div>
           <div className="field">
             <label className="l">Dietary preferences</label>
@@ -192,21 +190,20 @@ export function List() {
                 ))}
               </div>
             </details>
-            <p className="hint tiny mut" style={{ marginTop: 8 }}>
-              Selected as a request. Caterers confirm availability.
-            </p>
           </div>
-          <button className="btn block">Apply filters</button>
-          <div className="hr" />
-          <h4 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Planning out of town?</h4>
-          <p className="mut small" style={{ margin: 0 }}>
-            Check service areas and travel notes on each caterer's profile.
-          </p>
+          <div className="filters-actions">
+            <button className="btn">Apply filters</button>
+            <button type="button" className="btn out" onClick={() => (setOpen(false), nav('/caterers'))}>
+              Reset
+            </button>
+          </div>
         </form>
+      )}
+      <div className="dir-grid solo" style={{ marginTop: 6 }}>
         <div>
           <div className="results-head">
             <b>
-              {rows.length} caterer{rows.length === 1 ? '' : 's'} match{rows.length === 1 ? 'es' : ''} your event
+              {rows.length} caterer{rows.length === 1 ? '' : 's'} match{rows.length === 1 ? 'es' : ''} your search
             </b>
             <label className="small mut">
               Sort:{' '}
@@ -231,7 +228,7 @@ export function List() {
           {rows.length === 0 && (
             <div className="empty-state">
               <h3>No caterers found</h3>
-              <p>Try a wider budget, fewer guests, or a different event type.</p>
+              <p>Try a wider budget, fewer guests, a different event type, or a different business name.</p>
               <button className="btn" onClick={() => nav('/caterers')}>
                 Reset filters
               </button>

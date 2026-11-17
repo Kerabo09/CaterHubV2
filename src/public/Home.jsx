@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Arrow, Up } from '../shared/Icons';
 import { EVENTS, coverOf, fromPrice, gate, ok, peso, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
+import { BUDGETS } from './CatererList';
 const STEPS = [
   ['01', 'Find your caterer', 'Filter by location, budget, event type, and guest count.'],
   ['02', 'Send a complete inquiry', 'Share your date, venue, package, and special requests.'],
@@ -79,6 +80,16 @@ export function Home() {
               <option value="">Choose an occasion</option>
               {events.map((e) => (
                 <option key={e}>{e}</option>
+              ))}
+            </select>
+          </label>
+          <label className="sf">
+            <span>Budget per guest</span>
+            <select name="budget" defaultValue="">
+              {BUDGETS.map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
               ))}
             </select>
           </label>
