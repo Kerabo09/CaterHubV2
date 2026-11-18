@@ -51,7 +51,7 @@ export function Login() {
             onClick={run(async (e) => {
               const em = e.target.closest('form').email.value.trim();
               if (!em) throw new Error('Enter your email first.');
-              const { error } = await sb.auth.resetPasswordForEmail(em);
+              const { error } = await sb.auth.resetPasswordForEmail(em, { redirectTo: window.location.origin + '/reset-password' });
               if (error) throw error;
               msg('Password reset email sent.');
             })}

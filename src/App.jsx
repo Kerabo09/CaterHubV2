@@ -12,6 +12,8 @@ import { Compare } from './public/Compare';
 import { Saved } from './public/Saved';
 import { Signup } from './auth/Signup';
 import { Login } from './auth/Login';
+import { ResetPassword } from './auth/ResetPassword';
+import { Privacy } from './public/Privacy';
 import { Inquire } from './customer/SendInquiry';
 import { Sent } from './customer/InquirySent';
 import { My } from './customer/MyInquiries';
@@ -58,6 +60,8 @@ export default function App() {
         <Route path="/saved" element={<Saved />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/inquire/:id" element={cust(<Inquire />)} />
         <Route path="/inquire/sent/:ref" element={cust(<Sent />)} />
         <Route path="/my" element={cust(<My />)} />
