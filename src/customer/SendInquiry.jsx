@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../shared/AuthContext';
 import { AvailCalendar, BLOCKED, useAvail } from '../shared/AvailCalendar';
 import { Arrow } from '../shared/Icons';
-import { ALLERGIES, DIETARY, EVENTS, Empty, gate, msg, ok, peso, shortDay, today, useLoad } from '../shared/lib';
+import { ALLERGIES, DIETARY, Empty, gate, msg, ok, peso, shortDay, today, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
 const toggle = (list, v) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 export function Inquire() {
@@ -39,7 +39,7 @@ export function Inquire() {
   const ps = c.catering_packages.filter((p) => p.is_active),
     sel = pkg ?? (sp.get('pkg') || ''),
     p = ps.find((x) => String(x.package_id) === sel),
-    ev = c.event_types.length ? c.event_types : EVENTS,
+    ev = c.event_types,
     n = parseInt(guests) || 0,
     st = date ? av.data?.map?.[date] : null,
     taken = BLOCKED.includes(st);

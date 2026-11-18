@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Arrow, Up } from '../shared/Icons';
-import { EVENTS, coverOf, fromPrice, gate, ok, peso, useLoad } from '../shared/lib';
+import { coverOf, fromPrice, gate, ok, peso, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
 import { BUDGETS } from './CatererList';
 const STEPS = [
@@ -30,7 +30,7 @@ export function Home() {
   }, [hash, g]);
   const all = s.data || [];
   const areas = [...new Set(all.flatMap((c) => c.service_areas.map((a) => a.area_name.trim())))].sort();
-  const events = [...new Set([...EVENTS, ...all.flatMap((c) => c.event_types)])];
+  const events = [...new Set(all.flatMap((c) => c.event_types))].sort();
   const featured = all.slice(0, 3);
   const find = (e) => {
     e.preventDefault();

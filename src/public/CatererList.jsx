@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Arrow, Bookmark, Swap } from '../shared/Icons';
-import { DIETARY, EVENTS, coverOf, fromPrice, gate, msg, ok, peso, shortDay, useLoad } from '../shared/lib';
+import { DIETARY, coverOf, fromPrice, gate, msg, ok, peso, shortDay, useLoad } from '../shared/lib';
 import { COMPARE_MAX, useList } from '../shared/saved';
 import { sb } from '../shared/supabase';
 export const BUDGETS = [
@@ -42,7 +42,8 @@ export function matches(c, q, blocked) {
 export function List() {
   const [sp, setSp] = useSearchParams();
   const nav = useNavigate();
-  const [open, setOpen] = useState(false);
+  const wide = () => window.matchMedia('(min-width: 721px)').matches,
+    [open, setOpen] = useState(wide);
   const q = Object.fromEntries(sp);
   const [saved, toggleSaved] = useList('saved');
   const [cmp, toggleCmp] = useList('compare');
@@ -72,7 +73,7 @@ export function List() {
   const all = s.data,
     blocked = new Set(bl.data || []);
   const areas = [...new Set(all.flatMap((c) => c.service_areas.map((a) => a.area_name.trim())))].sort();
-  const events = [...new Set([...EVENTS, ...all.flatMap((c) => c.event_types)])];
+  const events = [...new Set(all.flatMap((c) => c.event_types))].sort();
   const diet = (q.diet || '').split(',').filter(Boolean);
   const activeFilters = ['area', 'event', 'budget', 'guests', 'date', 'diet'].filter((k) => q[k]).length;
   const sort = q.sort || 'name';
@@ -98,7 +99,7 @@ export function List() {
     if (q.sort) n.sort = q.sort;
     Object.keys(n).forEach((k) => !n[k] && delete n[k]);
     setSp(n);
-    setOpen(false);
+    if (!wide()) setOpen(false);
   };
   const chips = [
     q.name && ['name', `"${q.name}"`],
@@ -193,7 +194,7 @@ export function List() {
           </div>
           <div className="filters-actions">
             <button className="btn">Apply filters</button>
-            <button type="button" className="btn out" onClick={() => (setOpen(false), nav('/caterers'))}>
+            <button type="button" className="btn out" onClick={() => (!wide() && setOpen(false), nav('/caterers'))}>
               Reset
             </button>
           </div>
