@@ -88,9 +88,10 @@ export function Footer() {
             <Link to="/caterers">Browse caterers</Link>
             <Link to="/#how">How it works</Link>
             <Link to="/signup">List your business</Link>
+            <Link to="/privacy">Privacy notice</Link>
           </div>
         </div>
-        <div className="foot-copy" style={{ gridColumn: 2 }}>
+        <div className="foot-copy">
           <span>© {new Date().getFullYear()} CaterHub</span>
           <span>·</span>
           <span>Calbayog City, Samar</span>

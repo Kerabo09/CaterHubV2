@@ -4,6 +4,7 @@ import { Password, RolePick, Shell, Submit } from './AuthParts';
 import { useAuth } from '../shared/AuthContext';
 import { msg, run } from '../shared/lib';
 import { sb } from '../shared/supabase';
+import { PRIVACY_VERSION } from '../shared/legal';
 // The account type (customer or caterer owner) is chosen here, once, when the account is created.
 export function Signup() {
   const nav = useNavigate(),
@@ -18,10 +19,21 @@ export function Signup() {
         onSubmit={run(async (e) => {
           const f = Object.fromEntries(new FormData(e.target));
           setErr('');
+          if (!f.consent) {
+            setErr('Please accept the Privacy Notice to create an account.');
+            return;
+          }
           const { data, error } = await sb.auth.signUp({
             email: f.email.trim(),
             password: f.password,
-            options: { data: { name: f.name.trim(), phone: f.phone.trim(), role } },
+            options: {
+              data: {
+                name: f.name.trim(),
+                phone: f.phone.trim(),
+                role,
+                privacy_consent: { version: PRIVACY_VERSION, accepted_at: new Date().toISOString() },
+              },
+            },
           });
           if (error) {
             if (/registered/i.test(error.message)) {
@@ -65,12 +77,23 @@ export function Signup() {
         <Password
           label="Password *"
           name="password"
-          minLength={6}
+          minLength={8}
           autoComplete="new-password"
           placeholder="Create a password"
-          hint="Use at least 6 characters. Keep your password private."
+          hint="Use at least 8 characters. Keep your password private."
           required
         />
+        <label className="check" style={{ alignItems: 'flex-start', margin: '2px 0 18px' }}>
+          <input type="checkbox" name="consent" required style={{ marginTop: 3, flex: 'none' }} />
+          <span className="small">
+            I have read the{' '}
+            <Link className="lnk" to="/privacy" target="_blank" rel="noopener noreferrer">
+              Privacy Notice
+            </Link>{' '}
+            and I agree that CaterHub may collect, use and store my personal information (name, email, contact number and inquiry details) as
+            described.
+          </span>
+        </label>
         {err && (
           <div className="small" role="alert" style={{ color: '#b3261e', marginBottom: 14 }}>
             {err}
