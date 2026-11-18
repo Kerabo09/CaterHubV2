@@ -91,9 +91,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .foot-in { max-width: 1140px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .foot .brand { color: #fff; }
 .foot p { color: #c4ced4; font-size: 14px; margin-top: 14px; }
-.foot-links { display: flex; gap: 26px; font-size: 13px; }
+.foot-links { display: flex; flex-wrap: wrap; gap: 10px 26px; font-size: 13px; }
 .foot-links a { color: #fff; }
-.foot-copy { grid-column: 2; font-size: 12px; color: #aab6bd; display: flex; gap: 14px; }
+.foot-copy { grid-column: 2; font-size: 12px; color: #aab6bd; display: flex; flex-wrap: wrap; gap: 4px 14px; }
 
 /* ---------- cards / panels ---------- */
 .card { background: var(--card); border-radius: 16px; padding: 26px; box-shadow: var(--shadow); }
@@ -211,7 +211,7 @@ button.tag { cursor: pointer; }
 .filters label.l { font-size: 12px; font-weight: 500; color: var(--mut); }
 .filters select, .filters input { padding: 10px 12px; font-size: 13px; }
 .filters .hr { border-top: 1px solid var(--line); margin: 18px 0; }
-.filters.bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 4px 18px; align-items: start; }
+.filters.bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 4px 18px; align-items: start; }
 .filters-actions { grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap; }
 .dd { position: relative; }
 .dd summary { list-style: none; cursor: pointer; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2366727a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
@@ -430,6 +430,13 @@ button.tag { cursor: pointer; }
 .evgrid { display: grid; grid-template-columns: repeat(3, auto); gap: 10px 24px; justify-content: start; margin: 8px 0 12px; }
 .add-ev { display: flex; gap: 10px; margin-top: 8px; }
 .add-ev input { flex: 1; }
+.evchips { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 12px; }
+.evchip { display: inline-flex; align-items: center; gap: 4px; background: var(--rust-t); color: var(--rust); border-radius: 999px; padding: 6px 6px 6px 14px; font-size: 14px; font-weight: 500; }
+.evchip button { border: 0; background: rgba(0, 0, 0, 0.08); color: inherit; width: 24px; height: 24px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; }
+.evchip button:hover { background: rgba(0, 0, 0, 0.16); }
+.nactions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.nactions .btn.nreply { margin-top: 0; }
+.nactions > div.nreply { flex: 1 1 100%; margin-top: 0; }
 
 /* modal */
 .modal-bg { position: fixed; inset: 0; background: rgba(31, 45, 56, 0.45); display: grid; place-items: center; z-index: 80; padding: 20px; }
@@ -465,7 +472,8 @@ button.tag { cursor: pointer; }
   .side { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 14px; }
   .side nav { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
   .side nav a { margin: 0; padding: 9px 12px; }
-  .side .biz, .side .foot-l, .side .ws { display: none; }
+  .side .biz, .side .ws { display: none; }
+  .side .foot-l { display: flex; flex-wrap: wrap; gap: 6px 22px; width: 100%; margin-top: 4px; padding: 10px 12px 0; border-top: 1px solid var(--line); }
   .mbody { padding: 24px 20px 56px; }
   .top { padding: 0 20px; }
   .cmp-top, .datebox { grid-template-columns: 1fr; }
@@ -477,6 +485,9 @@ button.tag { cursor: pointer; }
   .wrap { padding: 0 18px; }
   .nav-in { height: 60px; padding: 0 18px; }
   .nav-toggle { display: block; }
+  .auth-side { display: none; }
+  input, select, textarea { font-size: 16px; }
+  .btn.sm { min-height: 42px; }
   .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; background: #fff; border-bottom: 1px solid var(--line); flex-direction: column; align-items: flex-start; padding: 16px 18px 20px; gap: 16px; }
   .nav-links.open { display: flex; }
   .h1, .pf-head h1 { font-size: 32px; }

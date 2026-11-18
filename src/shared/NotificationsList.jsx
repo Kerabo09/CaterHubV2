@@ -121,6 +121,7 @@ export function NotesBody({ owner = false }) {
               <h4>{title}</h4>
               {body && <p>{body}</p>}
               <div className="when">{fmt(n.created_at)}</div>
+              <div className="nactions">
               {owner && ref && /^New inquiry|replied on/.test(n.message) && (
                 <Link className="btn out sm nreply" to={'/owner/inq/' + ref}>
                   Reply to customer
@@ -164,6 +165,7 @@ export function NotesBody({ owner = false }) {
                     Reply to caterer
                   </button>
                 ))}
+              </div>
             </div>
           </div>
         );
