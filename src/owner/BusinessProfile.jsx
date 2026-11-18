@@ -49,12 +49,14 @@ export function ProfileTab() {
     setNewEv('');
     setAdding(false);
   };
-  const tog = (e) =>
+  const rmEv = (t) => {
+    setExtra((l) => l.filter((e) => e !== t));
     setSel((s) => {
       const n = new Set(s);
-      n.has(e) ? n.delete(e) : n.add(e);
+      n.delete(t);
       return n;
     });
+  };
   // target: 'Draft' | 'Published' | 'Deactivated'
   const save = (target) =>
     run(async () => {
@@ -188,14 +190,17 @@ export function ProfileTab() {
             </div>
             <label className="l">Event types *</label>
             {list.length === 0 && <p className="tiny mut">No event types yet. Add the events your business caters.</p>}
-            <div className="evgrid">
+            <div className="evchips">
               {list.map((e) => (
-                <label className="check" key={e}>
-                  <input type="checkbox" checked={sel.has(e)} onChange={() => tog(e)} /> {e}
-                </label>
+                <span className="evchip" key={e}>
+                  {e}
+                  <button type="button" aria-label={'Remove ' + e} onClick={() => rmEv(e)}>
+                    ×
+                  </button>
+                </span>
               ))}
             </div>
-            {adding ? (
+            {adding || list.length === 0 ? (
               <div className="add-ev">
                 <input value={newEv} onChange={(e) => setNewEv(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addEv())} placeholder="Type a new event type (e.g. Christening)" maxLength={60} autoFocus />
                 <button type="button" className="btn out sm" onClick={addEv}>
