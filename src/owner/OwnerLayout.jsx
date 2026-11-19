@@ -20,7 +20,19 @@ export default function Owner() {
       ok(await sb.from('caterer_profiles').select('*,service_areas(area_name)').eq('user_id', me.id).maybeSingle()),
     [me.id],
   );
-  const [unread, setUnread] = useState(0);
+  const [unread, setUnread] = useState(0),
+    [menu, setMenu] = useState(false);
+  // phone menu: close when the page changes, lock page scrolling while open, close with Esc
+  useEffect(() => setMenu(false), [loc.pathname]);
+  useEffect(() => {
+    document.body.style.overflow = menu ? 'hidden' : '';
+    const esc = (e) => e.key === 'Escape' && setMenu(false);
+    window.addEventListener('keydown', esc);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', esc);
+    };
+  }, [menu]);
   useEffect(() => {
     const load = () =>
       sb
@@ -50,7 +62,18 @@ export default function Owner() {
   const setup = !c || c.status === 'Draft';
   return (
     <div className="shell">
-      <aside className="side">
+      <div className="m-bar">
+        <Brand to="/owner" />
+        <button className="m-menu" aria-expanded={menu} aria-controls="owner-side" onClick={() => setMenu(true)}>
+          Menu
+          {unread > 0 && <span className="cnt">{unread}</span>}
+        </button>
+      </div>
+      <div className={'scrim' + (menu ? ' on' : '')} onClick={() => setMenu(false)} />
+      <aside id="owner-side" className={'side' + (menu ? ' open' : '')}>
+        <button className="side-x" aria-label="Close menu" onClick={() => setMenu(false)}>
+          ×
+        </button>
         <Brand to="/owner" />
         <div className="ws">Owner workspace</div>
         <nav>

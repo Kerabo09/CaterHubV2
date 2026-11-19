@@ -358,6 +358,7 @@ button.tag { cursor: pointer; }
 .side .biz .lnk { display: block; margin: 14px 0 10px; font-size: 12.5px; }
 .side .foot-l { margin-top: auto; padding: 0 10px; font-size: 13px; color: var(--mut); display: grid; gap: 14px; }
 .side .foot-l button { background: none; border: 0; padding: 0; text-align: left; color: var(--mut); cursor: pointer; font-size: 13px; }
+.m-bar, .scrim, .side-x { display: none; }
 .main { min-width: 0; display: flex; flex-direction: column; }
 .top { background: #fff; border-bottom: 1px solid var(--line); height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 36px; font-size: 13px; color: var(--mut); }
 .top b { color: var(--ink); font-weight: 600; font-size: 13px; }
@@ -469,11 +470,14 @@ button.tag { cursor: pointer; }
   .cards3, .how, .rv3, .es-grid { grid-template-columns: 1fr; }
   .search { grid-template-columns: 1fr 1fr; }
   .shell { grid-template-columns: 1fr; }
-  .side { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; padding: 14px; }
-  .side nav { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
-  .side nav a { margin: 0; padding: 9px 12px; }
-  .side .biz, .side .ws { display: none; }
-  .side .foot-l { display: flex; flex-wrap: wrap; gap: 6px 22px; width: 100%; margin-top: 4px; padding: 10px 12px 0; border-top: 1px solid var(--line); }
+  .m-bar { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 40; background: #fff; border-bottom: 1px solid var(--line); padding: 10px 20px; }
+  .m-bar .brand { font-size: 20px; }
+  .m-menu { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 9px 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .scrim { display: block; position: fixed; inset: 0; background: rgba(31, 45, 56, 0.45); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 50; }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+  .side { position: fixed; top: 0; left: 0; bottom: 0; height: auto; width: min(290px, 86vw); z-index: 60; overflow-y: auto; border-right: 0; transform: translateX(-100%); visibility: hidden; transition: transform 0.22s ease, visibility 0.22s; }
+  .side.open { transform: none; visibility: visible; box-shadow: 0 0 40px rgba(0, 0, 0, 0.25); }
+  .side-x { display: block; position: absolute; top: 14px; right: 12px; width: 36px; height: 36px; border: 0; background: #f3f1ec; border-radius: 50%; font-size: 22px; line-height: 1; cursor: pointer; }
   .mbody { padding: 24px 20px 56px; }
   .top { padding: 0 20px; }
   .cmp-top, .datebox { grid-template-columns: 1fr; }
