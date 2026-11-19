@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Arrow, Bookmark, Swap } from '../shared/Icons';
-import { DIETARY, coverOf, fromPrice, gate, msg, ok, peso, shortDay, useLoad } from '../shared/lib';
+import { COVERS, DIETARY, fromPrice, gate, msg, ok, peso, shortDay, useLoad } from '../shared/lib';
 import { COMPARE_MAX, useList } from '../shared/saved';
 import { sb } from '../shared/supabase';
 export const BUDGETS = [
@@ -15,6 +15,14 @@ const SORTS = [
   ['low', 'Price: low to high'],
   ['high', 'Price: high to low'],
 ];
+// food photo as the background with the logo in a circle in the middle
+// (no food photo yet: a blurred copy of the logo is the background)
+const media = (c, i) => {
+  const photo = c.catering_packages.flatMap((p) => p.package_photos || [])[0]?.image_url;
+  if (photo) return { src: photo, badge: c.logo || null, blur: false };
+  if (c.logo) return { src: c.logo, badge: c.logo, blur: true };
+  return { src: COVERS[i % COVERS.length], badge: null, blur: false };
+};
 const budgetLabel = (v) => (BUDGETS.find((b) => b[0] === v) || [])[1] || v;
 // keep the choices a visitor made (date, guests, dietary) when they open a profile
 export const carry = (q) => {
@@ -72,7 +80,7 @@ export function List() {
   if (g) return g;
   const all = s.data,
     blocked = new Set(bl.data || []);
-  const areas = [...new Set(all.flatMap((c) => c.service_areas.map((a) => a.area_name.trim())))].sort();
+  const areas = [...new Map(all.flatMap((c) => c.service_areas.map((a) => a.area_name.trim().replace(/\s+/g, ' '))).map((n) => [n.toLowerCase(), n])).values()].sort();
   const events = [...new Set(all.flatMap((c) => c.event_types))].sort();
   const diet = (q.diet || '').split(',').filter(Boolean);
   const activeFilters = ['area', 'event', 'budget', 'guests', 'date', 'diet'].filter((k) => q[k]).length;
@@ -235,44 +243,59 @@ export function List() {
               </button>
             </div>
           )}
-          {rows.map((c, i) => {
-            const cv = coverOf(c, i),
-              p = fromPrice(c),
-              isSaved = saved.includes(c.caterer_id),
-              isCmp = cmp.includes(c.caterer_id),
-              custom = c.catering_packages.some((x) => x.is_active && x.is_customizable);
-            return (
-              <article className="cat" key={c.caterer_id}>
-                <div className={'ph' + (cv.isLogo ? ' logo' : '')}>
-                  <img src={cv.src} alt="" />
-                  <div className="cat-actions">
-                    <button type="button" className={'tog' + (isSaved ? ' on' : '')} onClick={() => toggleSaved(c.caterer_id)}>
-                      <Bookmark on={isSaved} /> {isSaved ? 'Saved' : 'Save'}
-                    </button>
-                    <button type="button" className={'tog' + (isCmp ? ' on' : '')} onClick={() => pickCompare(c.caterer_id)}>
-                      <Swap /> {isCmp ? 'Selected' : 'Compare'}
-                    </button>
+          <div className="ccards">
+            {rows.map((c, i) => {
+              const m = media(c, i),
+                p = fromPrice(c),
+                isSaved = saved.includes(c.caterer_id),
+                isCmp = cmp.includes(c.caterer_id),
+                custom = c.catering_packages.some((x) => x.is_active && x.is_customizable),
+                area = c.service_areas[0]?.area_name || 'Calbayog City',
+                text = c.tagline || c.description;
+              return (
+                <article className="ccard" key={c.caterer_id}>
+                  <div className="cc-media">
+                    <div className="cc-clip">
+                      <img className={m.blur ? 'blur' : ''} src={m.src} alt="" />
+                    </div>
+                    <div className="cc-btns">
+                      <button type="button" className={'cc-btn' + (isSaved ? ' on' : '')} aria-pressed={isSaved} onClick={() => toggleSaved(c.caterer_id)}>
+                        <Bookmark on={isSaved} /> {isSaved ? 'Saved' : 'Save'}
+                      </button>
+                      <button type="button" className={'cc-btn' + (isCmp ? ' on' : '')} aria-pressed={isCmp} onClick={() => pickCompare(c.caterer_id)}>
+                        <Swap /> {isCmp ? 'Selected' : 'Compare'}
+                      </button>
+                    </div>
+                    {m.badge && (
+                      <span className="cc-logo">
+                        <img src={m.badge} alt={c.business_name + ' logo'} />
+                      </span>
+                    )}
                   </div>
-                </div>
-                <div>
-                  <h3>{c.business_name}</h3>
-                  <div className="meta">
-                    {c.service_areas[0]?.area_name || 'Calbayog City'} · {c.event_types.join(', ')}
+                  <div className={'cc-body' + (m.badge ? ' has-logo' : '')}>
+                    <h3>
+                      <Link className="cat-link" to={'/caterer/' + c.caterer_id + carry(q)}>
+                        {c.business_name}
+                      </Link>
+                    </h3>
+                    <div className="cc-loc">
+                      {area}
+                      {c.out_of_town ? ' · Accepts out-of-town events' : ''}
+                    </div>
+                    {text && <p className="cc-text">{text}</p>}
+                    {q.date && <span className="etag ok">Available {shortDay(q.date)}</span>}
+                    <div className="cc-meta">
+                      {c.min_guests}–{c.max_guests} guests · {custom ? 'Customizable packages' : 'Set packages'}
+                    </div>
+                    <div className="cc-price">{p ? `From ${peso(p)} / guest` : 'Packages on request'}</div>
+                    <div className="cc-go">
+                      <span className="lnk">View profile →</span>
+                    </div>
                   </div>
-                  {c.tagline && <p style={{ marginBottom: 6 }}>{c.tagline}</p>}
-                  <div className="small mut">
-                    {c.min_guests}–{c.max_guests} guests · {custom ? 'Customizable packages' : 'Set packages'}
-                  </div>
-                  <div className="bot">
-                    <span className="price">{p ? `From ${peso(p)} / guest` : 'Packages on request'}</span>
-                    <Link className="lnk" to={'/caterer/' + c.caterer_id + carry(q)}>
-                      View profile →
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+                </article>
+              );
+            })}
+          </div>
           {cmp.length > 0 && (
             <div className="tray">
               <span>
