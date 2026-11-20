@@ -174,10 +174,12 @@ export function Profile() {
           <div>{area}</div>
           <div className="kv-l">Event types</div>
           <div>{c.event_types.join(' · ')}</div>
-          <div className="kv-l">Travel note</div>
-          <div>
-            {c.note || (c.out_of_town ? 'Out-of-town events accepted. Ask about fees.' : 'Calbayog City events only.')}
-          </div>
+          {(c.note || c.out_of_town) && (
+            <>
+              <div className="kv-l">Travel note</div>
+              <div>{c.note || 'Out-of-town events accepted. Ask about fees.'}</div>
+            </>
+          )}
           <div className="kv-l">Capacity</div>
           <div>
             {c.min_guests}–{c.max_guests} guests

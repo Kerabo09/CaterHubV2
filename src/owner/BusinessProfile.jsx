@@ -227,11 +227,17 @@ export function ProfileTab() {
                 );
               })()}
             </div>
-            <label className="check field">
-              <input type="checkbox" checked={v.out_of_town} onChange={set('out_of_town')} /> Accepts out-of-town events
-            </label>
             <div className="field">
-              <label className="l">Travel note</label>
+              <label className="l">Out-of-town events (optional)</label>
+              <label className="check">
+                <input type="checkbox" checked={v.out_of_town} onChange={set('out_of_town')} /> I accept out-of-town events
+              </label>
+              <p className="tiny mut" style={{ marginTop: 6 }}>
+                Leave this unchecked if you prefer to talk about out-of-town events with each customer.
+              </p>
+            </div>
+            <div className="field">
+              <label className="l">Travel note (optional)</label>
               <textarea rows="2" value={v.note} onChange={set('note')} placeholder="Free delivery within the city. Ask about delivery fees for out-of-town events." />
             </div>
             <label className="l">Event types *</label>
