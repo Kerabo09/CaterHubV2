@@ -17,10 +17,11 @@ export const fromPrice = (c) => {
 };
 export const COVERS = ['/images/cover-1.jpg', '/images/cover-2.jpg', '/images/cover-3.jpg'];
 // the cover of a caterer: the business logo, else a package photo, else a sample cover
-export const coverOf = (c, i = 0) => {
-  const ph = (c.catering_packages || []).flatMap((p) => p.package_photos || [])[0];
-  return { src: c.logo || ph?.image_url || COVERS[i % COVERS.length], isLogo: !!c.logo };
-};
+// the picture used outside the profile: the owner's cover photo, else the logo, else a sample photo
+export const coverOf = (c, i = 0) => ({
+  src: c.cover_image || c.logo || COVERS[i % COVERS.length],
+  isLogo: !c.cover_image && !!c.logo,
+});
 export const fmt = (d) =>
   new Date(d).toLocaleString('en-PH', {
     month: 'short',

@@ -15,11 +15,10 @@ const SORTS = [
   ['low', 'Price: low to high'],
   ['high', 'Price: high to low'],
 ];
-// food photo as the background with the logo in a circle in the middle
-// (no food photo yet: a blurred copy of the logo is the background)
+// the owner's cover photo is the background with the logo in a circle in the middle
+// (no cover photo yet: a blurred copy of the logo is the background; package photos are never used here)
 const media = (c, i) => {
-  const photo = c.catering_packages.flatMap((p) => p.package_photos || [])[0]?.image_url;
-  if (photo) return { src: photo, badge: c.logo || null, blur: false };
+  if (c.cover_image) return { src: c.cover_image, badge: c.logo || null, blur: false };
   if (c.logo) return { src: c.logo, badge: c.logo, blur: true };
   return { src: COVERS[i % COVERS.length], badge: null, blur: false };
 };

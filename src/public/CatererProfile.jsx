@@ -5,11 +5,13 @@ import { copyLink, mapUrl } from './mapLinks';
 import { BLOCKED, useAvail } from '../shared/AvailCalendar';
 import { Arrow, Bookmark } from '../shared/Icons';
 import { Empty, gate, longDate, msg, ok, peso, today, useLoad } from '../shared/lib';
+import { useAuth } from '../shared/AuthContext';
 import { COMPARE_MAX, useList } from '../shared/saved';
 import { sb } from '../shared/supabase';
 export function Profile() {
   const { id } = useParams();
   const [sp] = useSearchParams();
+  const { me } = useAuth();
   const q = Object.fromEntries(sp);
   const [cmp, toggleCmp] = useList('compare');
   const [date, setDate] = useState(q.date || '');
@@ -41,7 +43,7 @@ export function Profile() {
     );
   const ps = c.catering_packages.filter((p) => p.is_active),
     photos = ps.flatMap((p) => p.package_photos.map((x) => x.image_url)),
-    tiles = [c.logo && { src: c.logo, logo: true }, ...photos.map((src) => ({ src }))].filter(Boolean).slice(0, 2),
+    tiles = [c.cover_image && { src: c.cover_image }, c.logo && { src: c.logo, logo: true }, ...photos.map((src) => ({ src }))].filter(Boolean).slice(0, 2),
     inCmp = cmp.includes(c.caterer_id),
     st = date ? av.data?.map?.[date] : null,
     map = mapUrl(c),
@@ -54,6 +56,14 @@ export function Profile() {
   };
   return (
     <div className="wrap page">
+      {me?.id === c.user_id && (
+        <div className="owner-bar">
+          <span className="small mut">You are previewing how customers see your profile.</span>
+          <Link className="btn out sm" to="/owner/pf">
+            ← Back to business profile
+          </Link>
+        </div>
+      )}
       <div className="crumbs">
         <Link to="/caterers">Browse caterers</Link>
         <i>/</i>
