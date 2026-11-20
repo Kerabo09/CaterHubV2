@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { carry } from './CatererList';
 import { copyLink, mapUrl } from './mapLinks';
@@ -8,6 +8,31 @@ import { Empty, gate, longDate, msg, ok, peso, today, useLoad } from '../shared/
 import { useAuth } from '../shared/AuthContext';
 import { COMPARE_MAX, useList } from '../shared/saved';
 import { sb } from '../shared/supabase';
+// shows the whole picture: wide photos fill the tile, logos and tall pictures are shown uncropped
+// over a blurred copy of themselves, so there are no white bars
+function Tile({ t }) {
+  const ref = useRef(null),
+    [st, setSt] = useState({ fit: 'contain', ok: false });
+  const done = (img) =>
+    setSt({ fit: !t.logo && img.naturalWidth / img.naturalHeight >= 1.6 ? 'cover' : 'contain', ok: true });
+  useEffect(() => {
+    const img = ref.current;
+    if (img && img.complete && img.naturalWidth) done(img);
+  }, [t.src]);
+  return (
+    <div className="tile">
+      <img className="tile-bg" src={t.src} alt="" aria-hidden="true" />
+      <img
+        ref={ref}
+        className={'tile-fg ' + st.fit + (st.ok ? ' ok' : '')}
+        src={t.src}
+        alt=""
+        onLoad={(e) => done(e.target)}
+        onError={() => setSt((o) => ({ ...o, ok: true }))}
+      />
+    </div>
+  );
+}
 export function Profile() {
   const { id } = useParams();
   const [sp] = useSearchParams();
@@ -72,9 +97,7 @@ export function Profile() {
       <div className={'gal' + (tiles.length < 2 ? ' one' : '')}>
         {tiles.length === 0 && <div className="mut">No photos yet</div>}
         {tiles.map((t, i) => (
-          <div key={i} className={t.logo ? 'logo-t' : ''}>
-            <img src={t.src} alt="" />
-          </div>
+          <Tile key={i} t={t} />
         ))}
       </div>
       <div className="pf-head">
