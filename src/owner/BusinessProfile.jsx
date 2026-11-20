@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useOwner } from './OwnerLayout';
 import { useAuth } from '../shared/AuthContext';
 import { Link } from 'react-router-dom';
@@ -9,6 +9,21 @@ export function ProfileTab() {
   const { c, reload } = useOwner(),
     { me } = useAuth(),
     x = c || {};
+  // area names other caterers already use, so everyone spells them the same way
+  const [known, setKnown] = useState([]);
+  useEffect(() => {
+    sb.from('service_areas')
+      .select('area_name')
+      .then((r) => {
+        if (r.error) return;
+        const seen = new Map();
+        r.data.forEach((a) => {
+          const n = a.area_name.trim().replace(/\s+/g, ' ');
+          if (n && !seen.has(n.toLowerCase())) seen.set(n.toLowerCase(), n);
+        });
+        setKnown([...seen.values()].sort());
+      });
+  }, []);
   const [v, setV] = useState({
     business_name: x.business_name || '',
     tagline: x.tagline || '',
@@ -27,7 +42,9 @@ export function ProfileTab() {
   const [extra, setExtra] = useState(() => x.event_types || []);
   const [newEv, setNewEv] = useState('');
   const [adding, setAdding] = useState(false);
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState(null),
+    [coverFile, setCoverFile] = useState(null),
+    [dropCover, setDropCover] = useState(false);
   const [err, setErr] = useState('');
   const set = (k) => (e) => setV({ ...v, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
   const status = x.status || 'Draft',
@@ -91,6 +108,9 @@ export function ProfileTab() {
         status: target,
         event_types: types,
       };
+      // only touched when the owner changes the cover photo, so saving still works before the cover SQL patch is run
+      if (coverFile) row.cover_image = await upload(coverFile, me.id);
+      else if (dropCover) row.cover_image = null;
       let id = x.caterer_id;
       const write = (r) => (id ? sb.from('caterer_profiles').update(r).eq('caterer_id', id) : sb.from('caterer_profiles').insert({ ...r, user_id: me.id }).select('caterer_id').single());
       let r = await write(row);
@@ -101,7 +121,11 @@ export function ProfileTab() {
       }
       if (r.error) throw r.error;
       if (!id) id = r.data.caterer_id;
-      const names = split(v.areas);
+      const canon = (n) => {
+        const t = n.replace(/\s+/g, ' ').trim();
+        return known.find((k) => k.toLowerCase() === t.toLowerCase()) || t;
+      };
+      const names = [...new Set(split(v.areas).map(canon))];
       let d = await sb.from('service_areas').delete().eq('caterer_id', id);
       if (d.error) throw d.error;
       if (names.length) {
@@ -111,6 +135,8 @@ export function ProfileTab() {
       msg(target === 'Published' ? 'Profile saved. You are visible in the public directory.' : target === 'Deactivated' ? 'Profile deactivated. It is hidden from customers.' : 'Profile saved.');
       setExtra((l) => l.filter((t) => types.includes(t)));
       setFile(null);
+      setCoverFile(null);
+      setDropCover(false);
       reload();
     });
   const first = status === 'Draft';
@@ -180,6 +206,26 @@ export function ProfileTab() {
             <div className="field">
               <label className="l">Service areas * (comma separated)</label>
               <input value={v.areas} onChange={set('areas')} placeholder="Calbayog City, Catbalogan City" />
+              {(() => {
+                const used = split(v.areas).map((a) => a.toLowerCase()),
+                  tips = known.filter((k) => !used.includes(k.toLowerCase()));
+                return (
+                  tips.length > 0 && (
+                    <div style={{ marginTop: 10 }}>
+                      <div className="tiny mut" style={{ marginBottom: 6 }}>
+                        Already used by other caterers. Tap to add the same spelling:
+                      </div>
+                      <div className="evchips" style={{ margin: 0 }}>
+                        {tips.map((k) => (
+                          <button type="button" className="sugg" key={k} onClick={() => setV((o) => ({ ...o, areas: [...split(o.areas), k].join(', ') }))}>
+                            + {k}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                );
+              })()}
             </div>
             <label className="check field">
               <input type="checkbox" checked={v.out_of_town} onChange={set('out_of_town')} /> Accepts out-of-town events
@@ -270,6 +316,49 @@ export function ProfileTab() {
                 </p>
               </>
             )}
+          </div>
+          <div className="card">
+            <h3 className="sec-h" style={{ marginBottom: 14 }}>
+              Cover photo
+            </h3>
+            {(coverFile || (x.cover_image && !dropCover)) && (
+              <img
+                src={coverFile ? URL.createObjectURL(coverFile) : x.cover_image}
+                alt="Cover"
+                style={{ width: '100%', aspectRatio: '2 / 1', objectFit: 'cover', margin: '0 0 14px', borderRadius: 10, border: '1px solid var(--line)' }}
+              />
+            )}
+            <div className="dropz">
+              <div className="plus">+ Upload cover photo</div>
+              <p className="tiny mut" style={{ margin: '4px 0 10px' }}>
+                JPG, PNG, or WebP · Max 2 MB · Wide photo (about 1200×600) works best
+              </p>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-label="Cover photo"
+                onChange={(e) => {
+                  setCoverFile(e.target.files[0] || null);
+                  setDropCover(false);
+                }}
+              />
+            </div>
+            {(coverFile || (x.cover_image && !dropCover)) && (
+              <button
+                type="button"
+                className="lnk"
+                style={{ marginTop: 12, background: 'none', border: 0, padding: 0, cursor: 'pointer' }}
+                onClick={() => {
+                  setCoverFile(null);
+                  setDropCover(true);
+                }}
+              >
+                Remove cover photo
+              </button>
+            )}
+            <p className="tiny mut" style={{ marginTop: 12 }}>
+              Shown behind your logo on your card in the caterer directory. Your package photos stay inside your packages and are not used here.
+            </p>
           </div>
           <div className="card">
             <h3 className="sec-h" style={{ marginBottom: 14 }}>
