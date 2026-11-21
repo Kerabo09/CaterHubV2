@@ -50,7 +50,7 @@ export function ProfileTab() {
   const status = x.status || 'Draft',
     list = extra,
     checks = [
-      ['Business name and description', v.business_name.trim() && v.description.trim()],
+      ['Business name', v.business_name.trim()],
       ['Contact number', v.contact_number.trim()],
       ['At least one service area', split(v.areas).length > 0],
       ['At least one event type', sel.size > 0],
@@ -177,8 +177,8 @@ export function ProfileTab() {
               <input value={v.tagline} onChange={set('tagline')} maxLength={90} placeholder="e.g. Unforgettable flavors. Effortless celebrations." />
             </div>
             <div className="field">
-              <label className="l">Description *</label>
-              <textarea rows="4" value={v.description} onChange={set('description')} />
+              <label className="l">Description (optional)</label>
+              <textarea rows="4" value={v.description} onChange={set('description')} placeholder="Tell customers about your business, your specialties and what makes you different." />
             </div>
             <div className="fgrid">
               <div className="field">
