@@ -21,11 +21,15 @@ export function PackageEditor() {
   const [files, setFiles] = useState([]);
   const [delPhotos, setDelPhotos] = useState([]);
   const [type, setType] = useState('Food');
+  const [ptypeSel, setPtypeSel] = useState(null);
   const [fileKey, setFileKey] = useState(0);
   const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
   const g = gate(s);
   if (g) return g;
   const p = s.data;
+  // pricing type: per guest, or one fixed price for a set number of guests (like a family combo)
+  const ptype = ptypeSel ?? (p?.price_type === 'fixed' ? 'fixed' : 'per_guest'),
+    fixed = ptype === 'fixed';
   if (!p) return <div className="card"><h3 className="h3">Package not found</h3><Link className="btn" to="/owner/pk">Back to packages</Link></div>;
   const pending = rows.filter((r) => r.item_name.trim()).length + delItems.length + files.length + delPhotos.length;
   const setRow = (i, k, v) => setRows(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
@@ -33,14 +37,15 @@ export function PackageEditor() {
   const save = run(async (e) => {
     const f = e.target,
       g = (k) => f.elements.namedItem(k);
-    const mn = +g('min_guests').value,
-      mx = +g('max_guests').value;
-    if (!g('name').value.trim() || !g('description').value.trim()) throw new Error('Please add a package name and description.');
-    if (!(+g('price').value > 0)) throw new Error('Enter a price per guest.');
+    const mx = fixed ? +g('serves').value : +g('max_guests').value,
+      mn = fixed ? mx : +g('min_guests').value;
+    if (!g('name').value.trim()) throw new Error('Please add a package name.');
+    if (!(+g('price').value > 0)) throw new Error(fixed ? 'Enter the package price.' : 'Enter a price per guest.');
+    if (fixed && !(mx >= 1)) throw new Error('Enter how many guests this package is good for.');
     if (mn > mx) throw new Error('Minimum guests cannot exceed maximum guests.');
     const body = {
       name: g('name').value.trim(),
-      description: g('description').value.trim(),
+      description: g('description').value.trim() || null,
       price: +g('price').value,
       price_range: g('price_range').value.trim() || null,
       min_guests: mn,
@@ -49,6 +54,9 @@ export function PackageEditor() {
       tables_chairs: g('tc').value,
       is_customizable: g('cust').checked,
     };
+    // only sent when it matters, so saving per-guest packages works before the pricing SQL patch is run
+    if (fixed) body.price_type = 'fixed';
+    else if (p.price_type === 'fixed') body.price_type = 'per_guest';
     let pid = p.package_id;
     const write = async (row) => (isNew && !pid ? sb.from('catering_packages').insert({ ...row, caterer_id: c.caterer_id, is_active: true }).select('package_id').single() : sb.from('catering_packages').update(row).eq('package_id', pid));
     let r = await write(body);
@@ -57,6 +65,7 @@ export function PackageEditor() {
       delete body.price_range;
       r = await write(body);
     }
+    if (r.error && /price_type/i.test(r.error.message || '')) throw new Error('Fixed package pricing needs a database update. Run caterhub_package_pricing_patch.sql in Supabase, then save again.');
     if (r.error) throw r.error;
     if (isNew && !pid) pid = r.data.package_id;
     if (delItems.length) {
@@ -111,26 +120,44 @@ export function PackageEditor() {
                 <input name="name" defaultValue={p.name} />
               </div>
               <div className="field">
-                <label className="l">Description *</label>
-                <textarea name="description" rows="3" defaultValue={p.description} />
+                <label className="l">Description (optional)</label>
+                <textarea name="description" rows="3" defaultValue={p.description} placeholder="What makes this package special?" />
+              </div>
+              <div className="field">
+                <label className="l">How is this package priced? *</label>
+                <label className="check">
+                  <input type="radio" name="ptype" checked={!fixed} onChange={() => setPtypeSel('per_guest')} /> Per guest
+                </label>
+                <label className="check" style={{ marginTop: 6 }}>
+                  <input type="radio" name="ptype" checked={fixed} onChange={() => setPtypeSel('fixed')} /> One fixed price for the whole package (for example a combo for 10 guests)
+                </label>
               </div>
               <div className="fgrid">
                 <div className="field">
-                  <label className="l">Price per guest (₱) *</label>
+                  <label className="l">{fixed ? 'Package price (₱) *' : 'Price per guest (₱) *'}</label>
                   <input type="number" name="price" min="0" step="any" defaultValue={p.price} />
                 </div>
                 <div className="field">
                   <label className="l">Or price range (optional)</label>
-                  <input name="price_range" placeholder="e.g. ₱350–₱500 per guest" defaultValue={p.price_range || ''} />
+                  <input name="price_range" placeholder={fixed ? 'e.g. ₱4,000–₱4,500 per package' : 'e.g. ₱350–₱500 per guest'} defaultValue={p.price_range || ''} />
                 </div>
-                <div className="field">
-                  <label className="l">Minimum guests *</label>
-                  <input type="number" name="min_guests" min="1" defaultValue={p.min_guests} />
-                </div>
-                <div className="field">
-                  <label className="l">Maximum guests *</label>
-                  <input type="number" name="max_guests" min="1" defaultValue={p.max_guests} />
-                </div>
+                {fixed ? (
+                  <div className="field">
+                    <label className="l">Good for (number of guests) *</label>
+                    <input type="number" name="serves" min="1" defaultValue={p.max_guests} placeholder="e.g. 10" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="field">
+                      <label className="l">Minimum guests *</label>
+                      <input type="number" name="min_guests" min="1" defaultValue={p.min_guests} />
+                    </div>
+                    <div className="field">
+                      <label className="l">Maximum guests *</label>
+                      <input type="number" name="max_guests" min="1" defaultValue={p.max_guests} />
+                    </div>
+                  </>
+                )}
               </div>
               <label className="check field">
                 <input type="checkbox" name="cust" defaultChecked={p.is_customizable} /> Package can be customized

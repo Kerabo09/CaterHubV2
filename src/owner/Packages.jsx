@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useOwner } from './OwnerLayout';
-import { gate, msg, ok, peso, run, useLoad } from '../shared/lib';
+import { gate, guestsLabel, msg, ok, peso, priceLabel, run, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
 export function Packages() {
   const { c } = useOwner();
@@ -67,13 +67,16 @@ export function Packages() {
               <div className="bd">
                 <span className={'badge s-' + (p.is_active ? 'Active' : 'Inactive')}>{p.is_active ? 'Active' : 'Inactive'}</span>
                 <h3>{p.name}</h3>
-                <div className="pr">{peso(p.price)} / guest</div>
+                <div className="pr">{priceLabel(p)}</div>
                 <div className="small mut">
-                  {p.min_guests}–{p.max_guests} guests{p.is_customizable ? ' · Customizable' : ''}
+                  {guestsLabel(p)}
+                  {p.is_customizable ? ' · Customizable' : ''}
                 </div>
-                <p className="small mut" style={{ margin: '8px 0 0' }}>
-                  {(p.inclusions || []).join(' · ') || p.description}
-                </p>
+                {((p.inclusions || []).join(' · ') || p.description) && (
+                  <p className="small mut" style={{ margin: '8px 0 0' }}>
+                    {(p.inclusions || []).join(' · ') || p.description}
+                  </p>
+                )}
               </div>
               <div className="acts">
                 <Link className="btn sm" to={'/owner/pk/' + p.package_id}>

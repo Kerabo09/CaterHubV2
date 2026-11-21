@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Arrow, Up } from '../shared/Icons';
-import { coverOf, fromPrice, gate, ok, peso, useLoad } from '../shared/lib';
+import { coverOf, fromLabel, gate, ok, peso, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
 import { BUDGETS } from './CatererList';
 const STEPS = [
@@ -124,7 +124,7 @@ export function Home() {
             <div className="cards3">
               {featured.map((c, i) => {
                 const cv = coverOf(c, i),
-                  p = fromPrice(c);
+                  label = fromLabel(c);
                 return (
                   <Link className="cv" to={'/caterer/' + c.caterer_id} key={c.caterer_id}>
                     <div className="ph">
@@ -135,7 +135,7 @@ export function Home() {
                       {c.service_areas[0]?.area_name || 'Calbayog City'} · {c.event_types.slice(0, 2).join(' & ')}
                     </div>
                     <div className="foot-row">
-                      <span>{p ? `From ${peso(p)} / guest` : 'Packages on request'}</span>
+                      <span>{label || 'Packages on request'}</span>
                       <span className="lnk small">
                         View profile <Up />
                       </span>

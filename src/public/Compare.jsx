@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Arrow, Bookmark } from '../shared/Icons';
-import { COVERS, gate, ok, peso, useLoad } from '../shared/lib';
+import { COVERS, fromLabel, gate, guestsLabel, isFixed, ok, perGuest, peso, priceLabel, useLoad } from '../shared/lib';
 import { COMPARE_MAX, useList } from '../shared/saved';
 import { sb } from '../shared/supabase';
 export function Compare() {
@@ -24,11 +24,11 @@ export function Compare() {
   const guests = Math.max(0, n || 0);
   const info = (c) => {
     const act = c.catering_packages.filter((p) => p.is_active);
-    const from = act.length ? Math.min(...act.map((p) => +p.price)) : null;
+    const from = fromLabel(c);
     return { act, from, custom: act.some((p) => p.is_customizable) };
   };
   const first = rows[0] && info(rows[0]);
-  const pk = first && first.act.slice().sort((a, b) => a.price - b.price)[0];
+  const pk = first && first.act.slice().sort((a, b) => perGuest(a) - perGuest(b))[0];
   return (
     <div className="wrap page">
       <div className="crumbs">
@@ -131,7 +131,7 @@ export function Compare() {
                 const { from } = info(c);
                 return (
                   <div key={c.caterer_id}>
-                    <b className="big">{from ? `From ${peso(from)} / guest` : 'On request'}</b>
+                    <b className="big">{from || 'On request'}</b>
                     <small>Directory starting price; varies by package.</small>
                   </div>
                 );
@@ -223,14 +223,16 @@ export function Compare() {
                   {rows[0].business_name} · {pk.name}
                 </h3>
                 <b>
-                  {peso(pk.price)} / guest · {pk.min_guests}–{pk.max_guests} guests
+                  {priceLabel(pk)} · {guestsLabel(pk)}
                 </b>
                 <p className="small mut" style={{ margin: '12px 0' }}>
-                  {pk.description} Tables and chairs: {pk.tables_chairs || 'ask the caterer'}.
+                  {pk.description ? `${pk.description} ` : ''}Tables and chairs: {pk.tables_chairs || 'ask the caterer'}.
                 </p>
                 <p className="tiny mut">
-                  At {guests} guests: {peso(pk.price)} × {guests} = {peso(pk.price * guests)} base total. Menu changes and optional
-                  extras may affect the final quotation.
+                  {isFixed(pk)
+                    ? `Package price: ${peso(pk.price)} for up to ${pk.max_guests} guests.`
+                    : `At ${guests} guests: ${peso(pk.price)} × ${guests} = ${peso(pk.price * guests)} base total.`}{' '}
+                  Menu changes and optional extras may affect the final quotation.
                 </p>
                 <Link className="lnk small" to={'/package/' + pk.package_id}>
                   View package →

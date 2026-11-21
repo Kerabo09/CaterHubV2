@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../shared/AuthContext';
 import { Arrow } from '../shared/Icons';
-import { Empty, gate, ok, peso, useLoad } from '../shared/lib';
+import { Empty, gate, guestsLabel, isFixed, ok, peso, totalFor, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
 const GROUPS = [
   ['MAINS', ['Main dish', 'Main']],
@@ -31,10 +31,10 @@ export function Pkg() {
   if (!p) return <Empty>Package not found.</Empty>;
   const c = p.caterer_profiles,
     guests = Math.max(0, n || 0),
-    total = guests * Number(p.price),
+    total = totalFor(p, guests),
     area = (c.service_areas || []).map((a) => a.area_name).join(', ') || 'Calbayog City',
     extras = p.tables_chairs && p.tables_chairs !== 'Included';
-  const inquire = `/inquire/${c.caterer_id}?pkg=${p.package_id}&guests=${guests || ''}`;
+  const inquire = `/inquire/${c.caterer_id}?pkg=${p.package_id}&guests=${isFixed(p) ? p.max_guests : guests || ''}`;
   return (
     <div className="wrap page">
       <div className="crumbs">
@@ -55,7 +55,7 @@ export function Pkg() {
             A celebration, thoughtfully served.
           </h2>
           <p className="mut" style={{ maxWidth: 560 }}>
-            {p.description} Discuss your preferred dishes, styling, and serving requirements with {c.business_name} before
+            {p.description ? `${p.description} ` : ''}Discuss your preferred dishes, styling, and serving requirements with {c.business_name} before
             finalizing your event.
           </p>
           <h2 className="h2" style={{ fontSize: 24, margin: '40px 0 14px' }}>
@@ -83,11 +83,11 @@ export function Pkg() {
           <div className="card" style={{ padding: 28 }}>
             {p.is_customizable && <span className="pill rust">Customizable</span>}
             <div className="price-big">{peso(p.price)}</div>
-            <div className="mut small">per guest · {p.price_range || 'indicative pricing'}</div>
+            <div className="mut small">
+              {isFixed(p) ? 'per package' : 'per guest'} · {p.price_range || 'indicative pricing'}
+            </div>
             <hr style={{ border: 0, borderTop: '1px solid var(--line)', margin: '22px 0' }} />
-            <b style={{ fontSize: 17, fontWeight: 600 }}>
-              {p.min_guests}–{p.max_guests} guests
-            </b>
+            <b style={{ fontSize: 17, fontWeight: 600 }}>{guestsLabel(p)}</b>
             <p className="mut small" style={{ margin: '16px 0 8px' }}>
               Service area: {area}
             </p>
@@ -95,17 +95,20 @@ export function Pkg() {
             <b className="small" style={{ display: 'block', margin: '20px 0 8px' }}>
               Estimate · not a final quote
             </b>
+            {!isFixed(p) && (
+              <div className="est-row">
+                <span className="mut">Guest count</span>
+                <span className="guest-in">
+                  <input type="number" min="1" value={n} onChange={(e) => setN(parseInt(e.target.value) || 0)} aria-label="Guest count" />
+                  <span>guests</span>
+                </span>
+              </div>
+            )}
             <div className="est-row">
-              <span className="mut">Guest count</span>
-              <span className="guest-in">
-                <input type="number" min="1" value={n} onChange={(e) => setN(parseInt(e.target.value) || 0)} aria-label="Guest count" />
-                <span>guests</span>
-              </span>
-            </div>
-            <div className="est-row">
-              <span className="mut">Base total</span>
+              <span className="mut">{isFixed(p) ? 'Package price' : 'Base total'}</span>
               <b>{peso(total)}</b>
             </div>
+            {isFixed(p) && <p className="tiny mut">Good for up to {p.max_guests} guests. Ask the caterer if you have more guests.</p>}
             {extras && (
               <div className="box rust" style={{ padding: '12px 14px', margin: '12px 0' }}>
                 <b className="small" style={{ color: 'var(--rust)' }}>

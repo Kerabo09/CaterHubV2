@@ -4,7 +4,7 @@ import { carry } from './CatererList';
 import { copyLink, mapUrl } from './mapLinks';
 import { BLOCKED, useAvail } from '../shared/AvailCalendar';
 import { Arrow, Bookmark } from '../shared/Icons';
-import { Empty, gate, longDate, msg, ok, peso, today, useLoad } from '../shared/lib';
+import { Empty, gate, guestsLabel, longDate, msg, ok, peso, priceLabel, today, useLoad } from '../shared/lib';
 import { useAuth } from '../shared/AuthContext';
 import { COMPARE_MAX, useList } from '../shared/saved';
 import { sb } from '../shared/supabase';
@@ -141,9 +141,11 @@ export function Profile() {
           <h2 className="h2" style={{ fontSize: 26 }}>
             Good food brings people together.
           </h2>
-          <p className="mut" style={{ marginTop: 14, maxWidth: 560, whiteSpace: 'pre-line' }}>
-            {c.description}
-          </p>
+          {c.description && (
+            <p className="mut" style={{ marginTop: 14, maxWidth: 560, whiteSpace: 'pre-line' }}>
+              {c.description}
+            </p>
+          )}
           <h2 className="sec-t" id="packages" style={{ scrollMarginTop: 90 }}>
             For your next gathering
           </h2>
@@ -154,11 +156,11 @@ export function Profile() {
               {ps.map((p) => (
                 <div className="pk-card" key={p.package_id}>
                   <h4>{p.name}</h4>
-                  <p>{p.description}</p>
-                  <div className="pr">{peso(p.price)} / guest</div>
+                  {p.description && <p>{p.description}</p>}
+                  <div className="pr">{priceLabel(p)}</div>
                   <div className="small">
                     <span className="mut">
-                      {p.min_guests}–{p.max_guests} guests ·{' '}
+                      {guestsLabel(p)} ·{' '}
                     </span>
                     <Link className="lnk" to={'/package/' + p.package_id + carry(q)}>
                       View package →

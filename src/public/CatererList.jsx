@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Arrow, Bookmark, Swap } from '../shared/Icons';
-import { COVERS, DIETARY, fromPrice, gate, msg, ok, peso, shortDay, useLoad } from '../shared/lib';
+import { COVERS, DIETARY, fromLabel, fromPrice, gate, perGuest, msg, ok, peso, shortDay, useLoad } from '../shared/lib';
 import { COMPARE_MAX, useList } from '../shared/saved';
 import { sb } from '../shared/supabase';
 export const BUDGETS = [
@@ -30,7 +30,7 @@ export const carry = (q) => {
   return p.toString() ? '?' + p : '';
 };
 export function matches(c, q, blocked) {
-  const prices = c.catering_packages.filter((p) => p.is_active).map((p) => +p.price),
+  const prices = c.catering_packages.filter((p) => p.is_active).map(perGuest),
     mn = prices.length ? Math.min(...prices) : null,
     n = parseInt(q.guests);
   let [a, b] = (q.budget || '').split('-').map((x) => (x === '' || x === undefined ? NaN : parseFloat(x)));
@@ -245,7 +245,7 @@ export function List() {
           <div className="ccards">
             {rows.map((c, i) => {
               const m = media(c, i),
-                p = fromPrice(c),
+                label = fromLabel(c),
                 isSaved = saved.includes(c.caterer_id),
                 isCmp = cmp.includes(c.caterer_id),
                 custom = c.catering_packages.some((x) => x.is_active && x.is_customizable),
@@ -286,7 +286,7 @@ export function List() {
                     <div className="cc-meta">
                       {c.min_guests}–{c.max_guests} guests · {custom ? 'Customizable packages' : 'Set packages'}
                     </div>
-                    <div className="cc-price">{p ? `From ${peso(p)} / guest` : 'Packages on request'}</div>
+                    <div className="cc-price">{label || 'Packages on request'}</div>
                     <div className="cc-go">
                       <span className="lnk">View profile →</span>
                     </div>

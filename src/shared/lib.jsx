@@ -10,10 +10,25 @@ export const shortDay = (d) =>
   new Date(d + 'T00:00').toLocaleDateString('en-PH', { day: 'numeric', month: 'short' });
 export const when = (d) =>
   new Date(d).toLocaleString('en-PH', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
-// lowest package price of a caterer (for "From ₱200 / guest")
+// a package is priced per guest, or has one fixed price for a set number of guests (like a combo)
+export const isFixed = (p) => p.price_type === 'fixed';
+// price of one guest (a fixed package price is divided by the guests it serves, for sorting and budget filters)
+export const perGuest = (p) => (isFixed(p) ? Number(p.price) / Math.max(1, Number(p.max_guests) || 1) : Number(p.price));
+export const priceLabel = (p) => `${peso(p.price)} / ${isFixed(p) ? 'package' : 'guest'}`;
+export const guestsLabel = (p) => (isFixed(p) ? `Good for ${p.max_guests} guests` : `${p.min_guests}–${p.max_guests} guests`);
+export const totalFor = (p, n) => (isFixed(p) ? Number(p.price) : Number(p.price) * n);
+// lowest package price of a caterer, per guest-equivalent (for sorting)
 export const fromPrice = (c) => {
-  const p = (c.catering_packages || []).filter((x) => x.is_active !== false).map((x) => Number(x.price));
+  const p = (c.catering_packages || []).filter((x) => x.is_active !== false).map(perGuest);
   return p.length ? Math.min(...p) : null;
+};
+// "From ₱200 / guest" or, when every package has a fixed price, "From ₱4,000 / package"
+export const fromLabel = (c) => {
+  const act = (c.catering_packages || []).filter((x) => x.is_active !== false),
+    per = act.filter((x) => !isFixed(x));
+  if (per.length) return `From ${peso(Math.min(...per.map((x) => Number(x.price))))} / guest`;
+  if (act.length) return `From ${peso(Math.min(...act.map((x) => Number(x.price))))} / package`;
+  return null;
 };
 export const COVERS = ['/images/cover-1.jpg', '/images/cover-2.jpg', '/images/cover-3.jpg'];
 // the cover of a caterer: the business logo, else a package photo, else a sample cover

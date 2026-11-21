@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../shared/AuthContext';
 import { AvailCalendar, BLOCKED, useAvail } from '../shared/AvailCalendar';
 import { Arrow } from '../shared/Icons';
-import { ALLERGIES, DIETARY, Empty, gate, msg, ok, peso, shortDay, today, useLoad } from '../shared/lib';
+import { ALLERGIES, DIETARY, Empty, gate, guestsLabel, isFixed, msg, ok, peso, priceLabel, shortDay, today, totalFor, useLoad } from '../shared/lib';
 import { sb } from '../shared/supabase';
 const toggle = (list, v) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 export function Inquire() {
@@ -152,7 +152,7 @@ export function Inquire() {
               <select value={sel} onChange={(e) => setPkg(e.target.value)}>
                 {ps.map((x) => (
                   <option key={x.package_id} value={x.package_id}>
-                    {x.name} · {peso(x.price)} / guest
+                    {x.name} · {priceLabel(x)}
                   </option>
                 ))}
                 <option value="">Custom inquiry</option>
@@ -161,7 +161,7 @@ export function Inquire() {
             </div>
             <div className="field full">
               <label className="l">Estimated total budget (optional)</label>
-              <input name="budget" placeholder="e.g. ₱35,000" defaultValue={p && n ? peso(p.price * n) : ''} key={(p?.package_id || 'c') + n} />
+              <input name="budget" placeholder="e.g. ₱35,000" defaultValue={p && n ? peso(totalFor(p, n)) : ''} key={(p?.package_id || 'c') + n} />
             </div>
             <div className="field full">
               <label className="l">Special requests (optional)</label>
@@ -212,9 +212,9 @@ export function Inquire() {
             {p ? (
               <>
                 <p className="small">
-                  {peso(p.price)} / guest × {n || 0} guests
+                  {isFixed(p) ? `${peso(p.price)} / package · ${guestsLabel(p).toLowerCase()}` : `${peso(p.price)} / guest × ${n || 0} guests`}
                 </p>
-                <div className="big">{peso(p.price * n)}</div>
+                <div className="big">{peso(totalFor(p, n))}</div>
                 <p className="tiny mut">Estimated base total · excludes extras</p>
               </>
             ) : (

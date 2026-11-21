@@ -4,7 +4,7 @@ import { OWNER_STATUSES } from './constants';
 import { useAuth } from '../shared/AuthContext';
 import { Conversation, buildThread, markInquiryRead } from '../shared/Conversation';
 import { useOwner } from './OwnerLayout';
-import { Badge, gate, longDate, msg, ok, peso, run, shortDay, useLoad, when } from '../shared/lib';
+import { Badge, gate, longDate, msg, ok, peso, priceLabel, run, shortDay, useLoad, when } from '../shared/lib';
 import { sb } from '../shared/supabase';
 export function RespondInquiry() {
   const { ref } = useParams(),
@@ -110,7 +110,7 @@ export function RespondInquiry() {
               <div className="kv full">
                 <div className="label-s">Package</div>
                 <b>
-                  {i.catering_packages ? `${i.catering_packages.name} · ${peso(i.catering_packages.price)} / guest` : 'Custom inquiry'}
+                  {i.catering_packages ? `${i.catering_packages.name} · ${priceLabel(i.catering_packages)}` : 'Custom inquiry'}
                 </b>
               </div>
               {i.message && (

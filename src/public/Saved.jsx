@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Bookmark, Swap } from '../shared/Icons';
-import { coverOf, fromPrice, gate, msg, ok, peso, useLoad } from '../shared/lib';
+import { coverOf, fromLabel, gate, msg, ok, peso, useLoad } from '../shared/lib';
 import { COMPARE_MAX, useList } from '../shared/saved';
 import { sb } from '../shared/supabase';
 export function Saved() {
@@ -40,7 +40,7 @@ export function Saved() {
         <div style={{ marginTop: 26 }}>
           {rows.map((c, i) => {
             const cv = coverOf(c, i),
-              p = fromPrice(c),
+              label = fromLabel(c),
               isCmp = cmp.includes(c.caterer_id);
             return (
               <article className="cat" key={c.caterer_id}>
@@ -68,7 +68,7 @@ export function Saved() {
                     {c.min_guests}–{c.max_guests} guests
                   </div>
                   <div className="bot">
-                    <span className="price">{p ? `From ${peso(p)} / guest` : 'Packages on request'}</span>
+                    <span className="price">{label || 'Packages on request'}</span>
                     <Link className="lnk" to={'/caterer/' + c.caterer_id}>
                       View profile →
                     </Link>
